@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoyageCraft Concierge</title>
+<!-- Optional: used only to draw A2UI Icon components. If it can't load (offline/
+     corp network), icons fall back to showing their name as text. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<style>
+  :root {
+    --accent: #0f766e;
+    --accent-hover: #0d9488;
+    --accent-gradient: linear-gradient(135deg, #0f766e 0%, #2563eb 100%);
+    --bg: #f1f5f9;
+    --border: #e2e8f0;
+    --card-bg: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 1rem;
+  }
+  
+  .chat-app-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 920px;
+    height: 92vh;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  header {
+    background: var(--accent-gradient);
+    color: #fff;
+    padding: 1.2rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(15, 118, 110, 0.15);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .header-icon {
+    font-size: 1.6rem;
+    background: rgba(255, 255, 255, 0.2);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .header-title {
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .header-subtitle {
+    font-size: 0.82rem;
+    opacity: 0.9;
+    font-weight: 400;
+    margin: 0;
+  }
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.18);
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #4ade80;
+  }
+
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: #f8fafc;
+  }
+
+  /* --- Dialogue Row & Bubbles --- */
+  .dialogue-row {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 85%;
+    align-items: flex-end;
+  }
+  .dialogue-row.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+  .dialogue-row.agent {
+    align-self: flex-start;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .dialogue-row.agent .avatar {
+    background: rgba(15, 118, 110, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(15, 118, 110, 0.2);
+  }
+  .dialogue-row.user .avatar {
+    background: var(--accent-gradient);
+    color: #ffffff;
+  }
+
+  .bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .dialogue-row.user .bubble-wrapper {
+    align-items: flex-end;
+  }
+
+  .meta-tag {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 0 0.25rem;
+  }
+
+  .bubble {
+    padding: 0.85rem 1.2rem;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    text-align: left;
+    white-space: pre-wrap;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--text-primary);
+  }
+  .dialogue-row.agent .bubble {
+    border-bottom-left-radius: 4px;
+  }
+  .dialogue-row.user .bubble {
+    background: var(--accent-gradient);
+    color: #ffffff;
+    border: none;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
+  }
+
+  /* Rich A2UI bubble override */
+  .bubble.rich {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    white-space: normal;
+  }
+
+  /* Animated Typing Indicator */
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 0.9rem;
+  }
+  .typing-indicator span {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
+  }
+
+  /* --- Prompt chips styling --- */
+  .prompts-container {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.75rem 1.5rem 0.25rem;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+    align-items: center;
+  }
+  .prompt-chip {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .prompt-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(15, 118, 110, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(15, 118, 110, 0.12);
+  }
+
+  form {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1.1rem 1.5rem;
+    background: #ffffff;
+  }
+  input {
+    flex: 1;
+    padding: 0.85rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.98rem;
+    font-family: inherit;
+    outline: none;
+    background: #f8fafc;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  input:focus {
+    background: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+  }
+  button {
+    padding: 0.85rem 1.6rem;
+    border: none;
+    border-radius: 14px;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+    transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  }
+  button:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(15, 118, 110, 0.28);
+  }
+  button:active { transform: translateY(0); }
+
+  /* --- A2UI component styles --- */
+  .a2card { border:1px solid var(--border); border-radius:16px; padding:1.25rem; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,.04); max-width:100%; }
+  .a2card + .a2card, .a2col > .a2card { margin-top:.75rem; }
+  .a2col { display:flex; flex-direction:column; gap:.5rem; }
+  .a2row { display:flex; flex-direction:row; gap:.75rem; align-items:center; flex-wrap:wrap; }
+  .a2row.between { justify-content:space-between; }
+  .a2text { margin:0; line-height:1.5; }
+  .a2text.a2-h1 { font-size:1.5rem; font-weight:700; color:var(--text-primary); }
+  .a2text.a2-h2 { font-size:1.25rem; font-weight:700; color:var(--text-primary); }
+  .a2text.a2-h3 { font-size:1.1rem; font-weight:600; color:var(--text-primary); }
+  .a2text.a2-h4 { font-size:1rem; font-weight:600; color:var(--text-primary); }
+  .a2text.a2-caption { font-size:.85rem; color:var(--text-secondary); }
+  .a2divider { border:none; border-top:1px solid var(--border); margin:.5rem 0; width:100%; }
+  .a2img { max-width:100%; border-radius:12px; display:block; }
+  .material-symbols-outlined { font-family:'Material Symbols Outlined'; font-size:1.25rem; line-height:1; vertical-align:middle; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="chat-app-card">
+  <header>
+    <div class="header-brand">
+      <div class="header-icon">✈️</div>
+      <div>
+        <h1 class="header-title">VoyageCraft Concierge</h1>
+        <p class="header-subtitle">AI-Powered Travel & Itinerary Assistant</p>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>Active</span>
+    </div>
+  </header>
+
+  <div id="log"></div>
+
+  <div class="prompts-container">
+    <div class="prompt-chip" onclick="sendPrompt('Find beach destinations for a luxury trip')">🏝️ Search luxury beach destinations</div>
+    <div class="prompt-chip" onclick="sendPrompt('Calculate budget breakdown for 5 days in Tokyo')">💰 Calculate 5-day Tokyo budget</div>
+    <div class="prompt-chip" onclick="sendPrompt('Generate a vintage postcard preview of Bali')">🖼️ Generate Bali postcard</div>
+  </div>
+
+  <form id="form">
+    <input id="input" placeholder="Ask about destinations, budgets, or postcards…" autocomplete="off" autofocus>
+    <button>Send</button>
+  </form>
+</div>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+function sendPrompt(text) {
+  input.value = text;
+  form.dispatchEvent(new Event('submit', { cancelable: true }));
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function getTimeString() {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function createDialogueBubble(who) {
+  const isUser = who === "user";
+  const row = el("div", "dialogue-row " + who);
+
+  const avatar = el("div", "avatar", isUser ? "👤" : "✨");
+  const wrapper = el("div", "bubble-wrapper");
+  const meta = el("div", "meta-tag", isUser ? `You • ${getTimeString()}` : `VoyageCraft • ${getTimeString()}`);
+  const b = el("div", "bubble");
+
+  wrapper.appendChild(meta);
+  wrapper.appendChild(b);
+
+  row.appendChild(avatar);
+  row.appendChild(wrapper);
+
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+/* ----------------------------------------------------------------------------
+ * A2UI mini-renderer (v0.8 Basic Catalog subset).
+ * Renders Card / Column / Row / Text / Divider / List / Image / Icon.
+ * -------------------------------------------------------------------------- */
+
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  return ids;
+}
+
+function iconName(n) { return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase(); }
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;
+  }
+}
+
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {
+    const referenced = new Set();
+    for (const id in comps) { const spec = comps[id]; childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c)); }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) { const node = buildNode(rid, comps, new Set()); if (node) { container.appendChild(node); drew = true; } }
+  return drew;
+}
+
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const userBubble = createDialogueBubble("user");
+  userBubble.textContent = text;
+  input.value = "";
+  
+  const agentBubble = createDialogueBubble("agent");
+  const typing = el("div", "typing-indicator");
+  typing.appendChild(el("span"));
+  typing.appendChild(el("span"));
+  typing.appendChild(el("span"));
+  agentBubble.appendChild(typing);
+
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(agentBubble, data.parts || []);
+  } catch (e) {
+    agentBubble.textContent = "Error: " + e.message;
+  }
+});
+</script>
+</body>
+</html>
